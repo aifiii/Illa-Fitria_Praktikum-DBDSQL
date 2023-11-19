@@ -1,0 +1,186 @@
+create database Schema_Akademik;
+use Schema_Akademik;
+show tables;
+
+CREATE TABLE fakultas (
+    id_fakultas smallint,
+    fakultas varchar(45),
+    primary key (id_fakultas)
+);
+
+CREATE TABLE jurusan (
+    id_jurusan smallint,
+    id_fakultas smallint,
+    jurusan varchar(45),
+    primary key (id_jurusan),
+    foreign key (id_fakultas) references fakultas(id_fakultas)
+);
+
+CREATE TABLE strata (
+    id_strata smallint,
+    singkat varchar(10),
+    strata varchar(45),
+    primary key (id_strata)
+);
+
+CREATE TABLE program_studi (
+    id_program_studi smallint,
+    id_strata smallint,
+    id_jurusan smallint,
+    program_studi varchar(60),
+    primary key (id_program_studi),
+    foreign key (id_strata) references strata(id_strata),
+    foreign key (id_jurusan) references jurusan(id_jurusan)
+);
+
+CREATE TABLE seleksi_masuk (
+    id_seleksi_masuk smallint,
+    singkat varchar(12),
+    strata varchar(45),
+    primary key (id_seleksi_masuk)
+);
+
+CREATE TABLE mahasiswa (
+    NIM varchar(15),
+    id_seleksi_masuk smallint,
+    id_program_studi smallint,
+    nama varchar(45),
+    angkatan smallint,
+    tgl_lahir date,
+    kota_lahir varchar(60),
+    jenis_kelamin char(1) check (jenis_kelamin in ('W', 'P')),
+    primary key (NIM),
+    foreign key (id_seleksi_masuk) references seleksi_masuk(id_seleksi_masuk),
+    foreign key ( id_program_studi) references program_studi( id_program_studi)
+);
+
+INSERT INTO Schema_Akademik.MAHASISWA
+VALUES('155150404', 1,212,'JESSY',2016,'1999-2-10','BANDUNG','W'),
+('155150405', 2 ,219,'BAMBANG',2014,'1996-9-27','MAKASSAR','P');
+SELECT * FROM mahasiswa;
+
+CREATE TABLE Schema_Akademik.MAHASISWA_PINDAHAN(
+NIM VARCHAR(15) NOT NULL PRIMARY KEY,
+ID_SELEKSI_MASUK SMALLINT,
+FOREIGN KEY (ID_SELEKSI_MASUK) REFERENCES
+Schema_Akademik.SELEKSI_MASUK(ID_SELEKSI_MASUK),
+ID_PROGRAM_STUDI SMALLINT,
+FOREIGN KEY (ID_PROGRAM_STUDI) REFERENCES
+Schema_Akademik.PROGRAM_STUDI(ID_PROGRAM_STUDI),
+NAMA VARCHAR(45),
+ANGKATAN SMALLINT,
+TGL_LAHIR DATE,
+KOTA_LAHIR VARCHAR(60),
+JENIS_KELAMIN CHAR(1) CHECK (JENIS_KELAMIN IN ('W','P'))
+);
+
+INSERT INTO schema_akademik.MAHASISWA_PINDAHAN
+VALUES ('155150500', 1 ,211,'BUDI', 2015,'1997-3-3','BANYUWANGI','P'),
+('155150501', 2,212,'ANDI',2015,'1997-2-21','JAKARTA','P'),
+('155150502', 2 ,211,'DIMAS', 2015,'1998-4-11','SURABAYA','P'),
+('155150503', 2 ,211,'DIDIN',2015,'1997-2-26','BANDUNG','P');
+
+SELECT * FROM mahasiswa_pindahan;
+
+SELECT * FROM fakultas;
+insert into fakultas values
+(1,'Ekonomi & Bisnis'),
+(2,'Ilmu Komputer');
+
+
+SELECT * FROM jurusan;
+insert into jurusan values
+(21,2,'informatika'),
+(22,2,'sistem informasi'),
+(23,2,'teknik komputer');
+
+SELECT * FROM strata;
+insert into strata values 
+(1,'D1','Diploma'),
+(2,'S1','Sarjana'),
+(3,'S2','Magister');
+
+
+SELECT * FROM program_studi;
+insert into program_studi values
+(211,2,21,'teknik informatika'),
+(212,2,21, 'teknik komputer'),
+(219,3,21,'magister ilmu komputer');
+
+SELECT * FROM seleksi_masuk ;
+insert into seleksi_masuk values
+(1,'SNMPTN','SELEKSI NASIONAL MAHASISWA PTN'),
+(2, 'SBMPTN', 'SELEKSI BERSAMA MAHASISWA PTN');
+
+SELECT * FROM mahasiswa ;
+insert into mahasiswa values
+('155150400',1,211,'JONI',2015,'1997-1-1','Malang','W'),
+('155150401',2,212,'JONO',2015,'1997-10-2','Situbondo','P');
+
+update mahasiswa set nama = 'ILLA' where nama = 'jono';
+select * from mahasiswa;
+
+update mahasiswa set nama = 'JONO' where nama ='illa';
+select * from mahasiswa;
+
+delete from mahasiswa where nama = 'JONI';
+select * from  mahasiswa;
+
+delete from mahasiswa where nama = 'JONO';
+select * from  mahasiswa;
+
+SELECT NIM, NAMA, JENIS_KELAMIN, KOTA_LAHIR, ANGKATAN
+FROM mahasiswa
+WHERE KOTA_LAHIR LIKE 'B%'
+AND KOTA_LAHIR IS NOT NULL
+UNION
+SELECT NIM, NAMA, JENIS_KELAMIN, KOTA_LAHIR, ANGKATAN
+FROM mahasiswa_pindahan
+WHERE NAMA LIKE 'D%'
+ORDER BY NIM;
+
+SELECT NIM, NAMA, JENIS_KELAMIN, KOTA_LAHIR, ANGKATAN
+FROM mahasiswa
+WHERE ANGKATAN = 2015
+UNION
+SELECT NIM, NAMA, JENIS_KELAMIN, KOTA_LAHIR, ANGKATAN
+FROM mahasiswa_pindahan
+WHERE ANGKATAN = 2015 AND KOTA_LAHIR NOT LIKE 'M%'
+ORDER BY NIM;
+
+SELECT m.NIM, m.NAMA, m.ANGKATAN
+FROM mahasiswa m
+JOIN mahasiswa_pindahan mp ON m.KOTA_LAHIR = mp.KOTA_LAHIR
+WHERE mp.NAMA = 'BUDI';
+
+SELECT m.NIM, m.NAMA, m.ANGKATAN
+FROM mahasiswa m
+WHERE m.KOTA_LAHIR IN (SELECT DISTINCT KOTA_LAHIR FROM mahasiswa_pindahan);
+
+SELECT
+  (SELECT COUNT(*) FROM mahasiswa WHERE jenis_kelamin = 'W') AS Jumlah_wanita,
+  (SELECT COUNT(*) FROM mahasiswa WHERE jenis_kelamin = 'P') AS Jumlah_pria
+FROM dual;
+
+SELECT
+  W.JUMLAH_MAHASISWA AS JUMLAH_WANITA,
+  P.JUMLAH_MAHASISWA AS JUMLAH_PRIA
+FROM
+  (SELECT COUNT(jenis_kelamin) AS JUMLAH_MAHASISWA FROM mahasiswa WHERE jenis_kelamin = 'W') W,
+  (SELECT COUNT(jenis_kelamin) AS JUMLAH_MAHASISWA FROM mahasiswa WHERE jenis_kelamin = 'P') P;
+
+SELECT NIM, NAMA, ANGKATAN
+FROM mahasiswa
+WHERE ANGKATAN = (SELECT MIN(ANGKATAN) FROM mahasiswa);
+
+
+SELECT NIM, NAMA, ANGKATAN
+FROM mahasiswa
+WHERE ANGKATAN = ANY (SELECT ANGKATAN FROM mahasiswa WHERE jenis_kelamin = 'W');
+
+
+
+
+
+
+
